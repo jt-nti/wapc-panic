@@ -7,7 +7,9 @@ import (
 	"os"
 	"runtime/debug"
 
+	"github.com/hyperledgendary/fabric-ledger-protos-go/contract"
 	"github.com/wapc/wapc-go"
+	"google.golang.org/protobuf/proto"
 )
 
 func main() {
@@ -62,8 +64,18 @@ func hostCall(ctx context.Context, binding, namespace, operation string, payload
 		case "echo":
 			fmt.Printf("hostCall echo: %s\n", string(payload))
 			if string(payload) == "panic" {
-				fmt.Println("Panic!")
-				panic("Doomed!")
+				csrData, err := ioutil.ReadFile("testdata/old_create_state_request.bin")
+				if err != nil {
+					panic(err)
+				}
+
+				sh := &contract.StateHistory{}
+				err = proto.Unmarshal(csrData, sh)
+				if err != nil {
+					panic(err)
+				}
+
+				return []byte(sh.GetKey()), nil
 			}
 			return payload, nil // echo
 		}
